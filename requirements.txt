@@ -1,0 +1,19 @@
+# Telegram MTProto Client & Crypto
+pyrogram>=2.0.106
+tgcrypto>=1.2.5
+
+# LLM AI Integration (OpenAI, DeepSeek, OpenRouter compatible)
+openai>=1.35.0
+
+# Configuration & Settings Management
+pydantic>=2.7.0
+pydantic-settings>=2.2.0
+python-dotenv>=1.0.1
+
+# Async Database & Logging
+aiosqlite>=0.20.0
+colorlog>=6.8.2
+
+# Testing Suite
+pytest>=8.2.0
+pytest-asyncio>=0.23.6
