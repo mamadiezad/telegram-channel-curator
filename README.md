@@ -1,114 +1,64 @@
-# 📡 Telegram Channel Auto-Curator & AI Rewriter — Smart Aggregator & Post Curator Bot
+# Telegram Channel Curator
 
-[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
-[![Pyrogram MTProto](https://img.shields.io/badge/Pyrogram-MTProto-0088cc.svg)](https://docs.pyrogram.org/)
-[![LLM Ready](https://img.shields.io/badge/AI-OpenAI%20%7C%20DeepSeek-412991.svg)](https://openai.com/)
-[![SQLite Audit](https://img.shields.io/badge/Database-SQLite%20Async-003B57.svg)](https://www.sqlite.org/index.html)
-[![Docker Ready](https://img.shields.io/badge/Docker-Ready-2496ED.svg)](https://www.docker.com/)
-[![Telegram Support](https://img.shields.io/badge/Telegram-%40llllxyz-2CA5E0?style=flat&logo=telegram)](https://t.me/llllxyz)
+A modular Telegram post aggregator and AI rewriter built with Pyrogram (MTProto). It observes source channels, filters incoming posts by keywords, rewrites them using LLMs (or a deterministic regex cleaner), and publishes to your channel with human-in-the-loop review.
 
-> **A production-ready Telegram MTProto bot that monitors multiple source channels, filters incoming posts by target keywords, rewrites them using LLMs (OpenAI, DeepSeek, OpenRouter) or a rule-based template cleaner, and publishes them to your Telegram channel.**  
-> *(برای مشاهده مستندات کامل فارسی به [README_FA.md](./README_FA.md) مراجعه کنید).*
+Made ❤️ by [Mohammad](https://t.me/llllxyz) (`@llllxyz`)
 
 ---
 
-### **Made ❤️ by [Mohammad](https://t.me/llllxyz)**  
-**Telegram ID:** [@llllxyz](https://t.me/llllxyz)
+## The Problem
+Running an active Telegram channel takes hours of work every day. You have to monitor external news feeds, pick good posts, remove competitor links and usernames, rewrite the copy in your own style, and schedule the update.
+
+Standard Telegram bots (Bot API) cannot read posts from channels where they are not administrators. You cannot simply point a `@bot` at public news feeds or competitor channels to aggregate content.
+
+## The Solution
+This project uses an **MTProto client** (`Pyrogram`), connecting as a regular Telegram user account. You do not need admin access in the source channels; any public channel can be monitored.
+
+How the pipeline works:
+1. Observes configured source channels in real time.
+2. Normalizes Persian/Arabic text and matches incoming messages against your target keywords.
+3. If a post matches, it is sent to an LLM endpoint (OpenAI / DeepSeek / OpenRouter) to be rewritten, summarized, and tagged.
+4. If the LLM API is unreachable or no key is configured, a rule-based fallback cleaner strips competitor usernames/urls and appends your channel signature.
+5. Sends a preview card to your Telegram account with interactive inline buttons:
+   - `[✅ Publish to Channel]`
+   - `[❌ Reject Draft]`
+   - `[🔄 Regenerate with AI]`
 
 ---
 
-## 📑 Table of Contents
-- [Why Use an MTProto Channel Curator?](#why-use-an-mtproto-channel-curator)
-- [Key Features & Architecture](#key-features--architecture)
-- [System Workflow & Diagram](#system-workflow--diagram)
-- [Quickstart Guide (Local & Docker)](#quickstart-guide-local--docker)
-- [Interactive Admin Commands](#interactive-admin-commands)
-- [Draft Review & Publishing Modes](#draft-review--publishing-modes)
-- [Frequently Asked Questions (FAQ)](#frequently-asked-questions-faq)
-- [Search Keywords & Indexing](#search-keywords--indexing)
-- [Contact & Support](#contact--support)
-
----
-
-## 📌 Why Use an MTProto Channel Curator?
-
-Managing an active Telegram channel often requires monitoring dozens of external news feeds, industry blogs, and competitor channels, extracting relevant updates, rewriting them in your own voice, and publishing them on schedule. Doing this manually takes hours every day.
-
-Standard Telegram bot accounts (`@BotFather` tokens) cannot read posts from channels unless they are added as administrators. By using an **MTProto Userbot Client (Pyrogram)**, this application can observe public source channels without administrative permissions, filter posts by keywords in real time, rewrite them automatically, and publish to your target channel.
-
----
-
-## 🌟 Key Features & Architecture
-
-- **📡 Multi-Source Monitoring:**  
-  Add or remove source channels on the fly using `/add_source` and `/remove_source`.
-- **🔑 Smart Keyword Filtering:**  
-  Configure required keywords (`/add_keyword`). Only posts containing at least one matching word are processed. Includes automatic normalization of Persian and Arabic characters (`ي/ی`, `ك/ک`, zero-width spaces).
-- **🧠 Hybrid AI & Rule-Based Rewriter:**  
-  - **LLM Mode:** Connects to OpenAI, DeepSeek, OpenRouter, or Ollama to summarize, paraphrase, and format posts.
-  - **Rule-Based Fallback:** If the AI API key is missing or an API call fails, the bot automatically falls back to a deterministic cleaner that strips competitor URLs and mentions, generates hashtags, and formats paragraphs.
-- **🛡 Human-in-the-Loop Review Mode (`/mode review`):**  
-  Sends a draft preview to the administrator with interactive inline buttons:
-  `[✅ Approve & Publish] [❌ Reject] [🔄 Regenerate with AI]`.
-- **⚡ Fully Automated Mode (`/mode auto`):**  
-  Optionally publish rewritten posts immediately without manual approval.
-- **📊 SQLite Persistence & Deduplication:**  
-  Tracks processed message IDs in SQLite (`aiosqlite`) to prevent reposting duplicate content across restarts.
-- **🆓 100% Free & Open Source:**  
-  Free for everyone to use, modify, and self-host without license restrictions.
-
----
-
-## 🏛 System Workflow & Diagram
+## Architecture
 
 ```
-+-----------------------------------------------------------------------------------+
-|                        SOURCE TELEGRAM CHANNELS (PUBLIC)                          |
-+-----------------------------------------------------------------------------------+
-                                         |
-                                         v  New Message Event
-+-----------------------------------------------------------------------------------+
-|                       PYROGRAM ASYNC MTPROTO USERBOT CLIENT                       |
-+-----------------------------------------------------------------------------------+
-                                         |
-                                         v
-+-----------------------------------------------------------------------------------+
-|                           KEYWORD FILTERING ENGINE                                |
-|   - Normalizes Persian/Arabic characters ('ي'->'ی', 'ك'->'ک')                      |
-|   - Checks against SQLite keyword list (accepts all if list is empty)             |
-+-----------------------------------------------------------------------------------+
-                                         |
-                                         v  Match found
-+-----------------------------------------------------------------------------------+
-|                           REWRITE MANAGER (HYBRID)                                |
-|   1. Try LLM API (OpenAI / DeepSeek / OpenRouter) with custom prompt              |
-|   2. Fallback to Rule-Based Cleaner (strip URLs/mentions, append signature)       |
-+-----------------------------------------------------------------------------------+
-                                         |
-                                         v  Save Draft in SQLite
-+-----------------------------------------------------------------------------------+
-|                         PUBLISHER & WORKFLOW ROUTER                               |
-+-----------------------------------------------------------------------------------+
-             /                                                   \
-            /  mode = "review"                                    \  mode = "auto"
-           v                                                       v
-+------------------------------------+           +----------------------------------+
-|      ADMIN USER TELEGRAM CHAT      |           |      TARGET TELEGRAM CHANNEL     |
-|  Inline buttons:                   |           |  Direct instant publication      |
-|  [✅ Publish] [❌ Reject] [🔄 Regen] |           |  with channel footer signature    |
-+------------------------------------+           +----------------------------------+
+[Public Source Channels] --(New Post)--> [Pyrogram MTProto Client]
+                                                  |
+                                                  v
+                                      [Keyword Filter & Normalizer]
+                                                  |
+                                                  v
+                                      [Rewrite Engine: LLM / Regex]
+                                                  |
+                                                  v
+                                        [SQLite Draft Storage]
+                                                  |
+                         +------------------------+------------------------+
+                         |                                                 |
+                  (mode = review)                                   (mode = auto)
+                         |                                                 |
+                         v                                                 v
+             [Admin Review via Inline Buttons]                    [Target Telegram Channel]
 ```
 
 ---
 
-## 🚀 Quickstart Guide (Local & Docker)
+## Setup & Installation
 
-### 1️⃣ Obtain Telegram Credentials
-1. Log in to [https://my.telegram.org/apps](https://my.telegram.org/apps).
-2. Create an application to get your `API_ID` and `API_HASH`.
+### 1. Requirements
+- Python 3.12+ (or Docker)
+- Telegram API credentials (`API_ID` and `API_HASH`) from [my.telegram.org](https://my.telegram.org/apps)
+- A Telegram account to authenticate the client
 
-### 2️⃣ Configure Environment Variables
-Clone the repository and copy the example configuration file:
+### 2. Configuration
+Clone the repository and copy the example environment file:
 
 ```bash
 git clone https://github.com/mamadiezad/telegram-channel-curator.git
@@ -116,7 +66,7 @@ cd telegram-channel-curator
 cp .env.example .env
 ```
 
-Edit `.env` and set your credentials and preferences:
+Edit `.env` and set your preferences:
 ```ini
 TELEGRAM_API_ID=12345678
 TELEGRAM_API_HASH=your_telegram_api_hash
@@ -128,79 +78,57 @@ LLM_MODEL_NAME=gpt-4o-mini
 CHANNEL_SIGNATURE=@MyTechNewsChannel
 ```
 
-### 3️⃣ Running Locally with Makefile
-
+### 3. Local Execution
 ```bash
-# Create local virtual environment and install dependencies
+# Install dependencies
 make install
 
-# Run automated unit tests
+# Run automated tests
 make test
 
 # Start the bot
 make run
 ```
-*On first execution, Pyrogram will ask for the verification code sent to your Telegram account to generate your `.session` file.*
+*On first start, Pyrogram will prompt you for the verification code sent to your Telegram account to generate the `.session` file.*
 
-### 4️⃣ Running with Docker Compose
-
+### 4. Running with Docker Compose
 ```bash
-# Build and run the container in detached mode
 docker-compose up -d --build
-
-# Inspect real-time colored logs
-docker-compose logs -f
 ```
 
 ---
 
-## 💬 Interactive Admin Commands
+## Interactive Admin Commands
 
-Send these commands from your Telegram account in any chat with the bot (or Saved Messages):
+Send these commands from your authenticated admin account in any chat with the bot:
 
-| Command | Arguments | Example | Description |
-| :--- | :--- | :--- | :--- |
-| `/add_source` | `<@channel>` | `/add_source @TechNewsFA` | Add a source channel to monitor. |
-| `/remove_source` | `<@channel>` | `/remove_source @TechNewsFA` | Remove a monitored source channel. |
-| `/list_sources` | *None* | `/list_sources` | List all monitored source channels. |
-| `/add_keyword` | `<word>` | `/add_keyword پایتون` | Add a keyword filter rule. |
-| `/remove_keyword` | `<word>` | `/remove_keyword پایتون` | Remove a keyword filter rule. |
-| `/list_keywords` | *None* | `/list_keywords` | View active keywords (if empty, all posts are processed). |
-| `/mode` | `<auto \| review>` | `/mode review` | Switch between instant posting (`auto`) and admin approval (`review`). |
-| `/set_prompt` | `<text>` | `/set_prompt Rewrite casually in Persian` | Customize the LLM system prompt instructions. |
-| `/stats` | *None* | `/stats` | Display processed, published, pending, and rejected post statistics. |
-| `/start` or `/help` | *None* | `/help` | Display interactive bilingual help menu. |
-
----
-
-## ❓ Frequently Asked Questions (FAQ)
-
-### Q1: Can I monitor public Telegram channels where I am not an administrator?
-**A:** Yes. Because this bot uses an MTProto user session (via Pyrogram), it can observe any public Telegram channel that your account can read.
-
-### Q2: What happens if my OpenAI or DeepSeek API key is invalid or the server is down?
-**A:** The bot will catch the API exception, log a warning, and automatically switch to the deterministic Rule-Based Rewriter. This fallback strips competitor usernames and links, cleans paragraph formatting, generates hashtags, and appends your channel signature so your publishing workflow never stops.
-
-### Q3: How does the Human-in-the-Loop review mode work?
-**A:** When `PUBLISHING_MODE=review` is set, every matching post is rewritten and sent as a draft message to your `ADMIN_USER_ID` with inline keyboard buttons. You can click **[✅ Publish]** to post it immediately to `TARGET_CHANNEL`, **[❌ Reject]** to discard it, or **[🔄 Regenerate]** to run the AI rewriter again.
-
-### Q4: How do I prevent the bot from posting duplicate news?
-**A:** The bot records every processed `(source_channel, source_msg_id)` pair in its SQLite database (`aiosqlite`). Even if the bot is restarted, it will never process or publish the same source post twice.
+| Command | Description | Example |
+| :--- | :--- | :--- |
+| `/add_source <@username>` | Monitor a new source channel | `/add_source @TechNewsFA` |
+| `/remove_source <@username>` | Stop monitoring a channel | `/remove_source @TechNewsFA` |
+| `/list_sources` | List all monitored source channels | `/list_sources` |
+| `/add_keyword <word>` | Add a required keyword rule | `/add_keyword python` |
+| `/remove_keyword <word>` | Remove a keyword rule | `/remove_keyword python` |
+| `/list_keywords` | List active keywords (empty list accepts all posts) | `/list_keywords` |
+| `/mode <auto/review>` | Switch between instant posting and inline review | `/mode review` |
+| `/set_prompt <text>` | Customize the LLM rewriting instruction | `/set_prompt Rewrite casually in Persian` |
+| `/stats` | Show curation, publication, and rejection statistics | `/stats` |
 
 ---
 
-## 🔎 Search Keywords & Indexing
+## Testing
 
-This repository is optimized for developers and community managers searching for:
-- `telegram-channel-curator`, `telegram-auto-curator`, `telegram-aggregator-bot`, `telegram-post-rewriter`
-- `ai-telegram-bot`, `openai-telegram-bot`, `deepseek-telegram-bot`, `pyrogram-channel-bot`
-- `telegram-mtproto-userbot`, `telegram-channel-admin-bot`, `telegram-rss-to-channel`
-- `persian-telegram-bot`, `telegram-content-automation`, `telegram-auto-poster`
+Run the automated test suite covering Persian normalization, keyword matching, and rule-based fallback cleaning:
+
+```bash
+pytest -v
+```
 
 ---
 
-## 📬 Contact & Support
+## License & Support
+
+This project is open-source and free to use for personal or commercial automation.
 
 - **Made ❤️ by [Mohammad](https://t.me/llllxyz)**
-- **Telegram ID:** [@llllxyz](https://t.me/llllxyz)
-- **100% Free & Open Source:** Free for everyone to use and contribute!
+- **Telegram:** `@llllxyz`
