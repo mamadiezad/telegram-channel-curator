@@ -1,12 +1,3 @@
-"""
-Admin Inline Keyboard Callback Handlers
-=======================================
-Processes interactive inline button actions on draft review cards:
-- Approve and publish draft to the target channel
-- Reject and discard draft
-- Regenerate rewritten text using the AI engine
-"""
-
 from pyrogram import Client, types
 from src.db.database import curator_db
 from src.services.publisher import PublisherService
@@ -15,7 +6,6 @@ from src.utils.logger import logger
 
 
 def register_callbacks(app: Client, publisher: PublisherService) -> None:
-    """Register callback query handlers for inline draft management buttons."""
 
     @app.on_callback_query()
     async def handle_inline_callback(client: Client, callback: types.CallbackQuery):
@@ -49,7 +39,7 @@ def register_callbacks(app: Client, publisher: PublisherService) -> None:
                     "──────────────────────────────\n"
                     f"{draft['rewritten_text']}\n"
                     "──────────────────────────────\n"
-                    "🌟 **Made ❤️ by Mohammad** | `@llllxyz`"
+                    "🌟 **Made ❤️ by [Mohammad](https://t.me/llllxyz)** | `@llllxyz`"
                 )
                 try:
                     await callback.message.edit_text(new_text, reply_markup=None, disable_web_page_preview=True)
@@ -66,7 +56,7 @@ def register_callbacks(app: Client, publisher: PublisherService) -> None:
                 "──────────────────────────────\n"
                 f"پیش‌نویس شماره {draft_id} توسط ادمین لغو شد.\n"
                 "──────────────────────────────\n"
-                "🌟 **Made ❤️ by Mohammad** | `@llllxyz`"
+                "🌟 **Made ❤️ by [Mohammad](https://t.me/llllxyz)** | `@llllxyz`"
             )
             try:
                 await callback.message.edit_text(new_text, reply_markup=None)
@@ -96,9 +86,14 @@ def register_callbacks(app: Client, publisher: PublisherService) -> None:
                     "──────────────────────────────\n"
                     f"📡 **کانال منبع:** `{draft['source_channel']}`\n"
                     "──────────────────────────────\n\n"
-                    f"{new_rewritten}\n\n"
+                    f"{new_rewritten[:3000]}\n\n"
                     "──────────────────────────────\n"
-                    "🌟 **Made ❤️ by Mohammad** | `@llllxyz`"
+                    "💡 **دستورات سریع مدیریت این پیش‌نویس:**\n"
+                    f"• انتشار در کانال ➔ `/pub {draft_id}`\n"
+                    f"• رد کردن پیش‌نویس ➔ `/rej {draft_id}`\n"
+                    f"• بازنویسی مجدد با AI ➔ `/regen {draft_id}`\n"
+                    "──────────────────────────────\n"
+                    "🌟 **Made ❤️ by [Mohammad](https://t.me/llllxyz)** | `@llllxyz`"
                 )
                 try:
                     await callback.message.edit_text(

@@ -1,10 +1,3 @@
-"""
-Main Application Entrypoint
-===========================
-Boots the Telegram Channel Auto-Curator & AI Rewriter, initializes the SQLite database,
-displays the startup banner, and connects to Telegram servers.
-"""
-
 import asyncio
 import sys
 from pathlib import Path
@@ -35,12 +28,10 @@ ASCII_BANNER = """
 
 
 async def start_database():
-    """Initialize SQLite database asynchronously."""
     await curator_db.init_db()
 
 
 def main():
-    """Run the channel curator application."""
     print(ASCII_BANNER)
     logger.info("Starting Telegram Channel Auto-Curator Bot...")
 

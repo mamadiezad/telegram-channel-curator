@@ -1,10 +1,3 @@
-"""
-Structured Colored Logging Utility
-==================================
-Provides console and file logging for tracking post aggregation, LLM rewriting,
-and publishing workflows.
-"""
-
 import logging
 import sys
 from pathlib import Path
@@ -16,14 +9,11 @@ LOG_FILE_PATH = Path("logs") / "curator.log"
 
 
 def setup_logger(name: str = "ChannelCurator") -> logging.Logger:
-    """Configure and return a structured logger instance."""
     logger = logging.getLogger(name)
     logger.setLevel(getattr(logging, config.log_level.upper(), logging.INFO))
-
     if logger.handlers:
         return logger
 
-    # Console Handler
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setLevel(getattr(logging, config.log_level.upper(), logging.INFO))
     color_formatter = colorlog.ColoredFormatter(
@@ -40,7 +30,6 @@ def setup_logger(name: str = "ChannelCurator") -> logging.Logger:
     console_handler.setFormatter(color_formatter)
     logger.addHandler(console_handler)
 
-    # File Handler
     file_handler = logging.FileHandler(LOG_FILE_PATH, encoding="utf-8")
     file_handler.setLevel(logging.DEBUG)
     file_formatter = logging.Formatter(

@@ -1,7 +1,3 @@
-"""
-Unit tests for Persian normalization and digit conversion utilities.
-"""
-
 import sys
 from pathlib import Path
 
@@ -29,7 +25,7 @@ def test_normalize_persian_text():
 def test_digit_conversions():
     assert convert_english_to_persian_digits("2026") == "۲۰۲۶"
     assert convert_persian_to_english_digits("۲۰۲۶") == "2026"
-    assert convert_persian_to_english_digits("٢٠٢٦") == "2026"  # Arabic digits
+    assert convert_persian_to_english_digits("٢٠٢٦") == "2026"
 
 
 def test_contains_any_keyword():

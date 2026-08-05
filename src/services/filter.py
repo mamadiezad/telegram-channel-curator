@@ -1,25 +1,11 @@
-"""
-Keyword Filtering Service
-=========================
-Evaluates incoming Telegram channel posts against configured keyword rules
-using Persian/Arabic character normalization.
-"""
-
 from typing import List
 from src.utils.persian import contains_any_keyword
 from src.utils.logger import logger
 
 
 class KeywordFilter:
-    """
-    Evaluates whether a message body contains target keywords.
-    """
     @staticmethod
     def should_process(text: str, keywords: List[str]) -> bool:
-        """
-        Determine if the post matches any active keywords.
-        If no keywords are configured, returns True (accepts all posts from monitored channels).
-        """
         if not text:
             return False
 

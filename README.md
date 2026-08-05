@@ -1,32 +1,32 @@
 # Telegram Channel Curator
 
-A modular Telegram post aggregator and AI rewriter built with Pyrogram (MTProto). It observes source channels, filters incoming posts by keywords, rewrites them using LLMs (or a deterministic regex cleaner), and publishes to your channel with human-in-the-loop review.
+یک ابزار خودکارسازی برای ادمین‌های کانال تلگرام؛ مبتنی بر کتابخانه Pyrogram (MTProto) برای رصد کانال‌های دیگر، فیلتر مطالب با کلیدواژه، بازنویسی متن‌ها با هوش مصنوعی و انتشار مدیریت‌شده در کانال.
 
 Made ❤️ by [Mohammad](https://t.me/llllxyz) (`@llllxyz`)
 
 ---
 
-## The Problem
-Running an active Telegram channel takes hours of work every day. You have to monitor external news feeds, pick good posts, remove competitor links and usernames, rewrite the copy in your own style, and schedule the update.
+## مشکل چی بود؟
+ادمین کانال تلگرام بودن کار زمان‌بریه. روزانه باید ده‌ها کانال خبری و تخصصی رو چک کنی، پست‌های خوب رو پیدا کنی، لینک‌ها و تبلیغات کانال‌های دیگه رو حذف کنی، متن رو تمیز یا بازنویسی کنی و در نهایت توی کانال خودت منتشر کنی.
 
-Standard Telegram bots (Bot API) cannot read posts from channels where they are not administrators. You cannot simply point a `@bot` at public news feeds or competitor channels to aggregate content.
+از طرفی، ربات‌های معمولی تلگرام (Bot API) یک محدودیت بزرگ دارن: برای اینکه بتونن پست‌های یک کانال رو بخونن، حتماً باید ادمین اون کانال باشن. بنابراین نمی‌تونید با یک ربات معمولی، کانال‌های عمومی اخبار یا رقبا رو مانیتور کنید.
 
-## The Solution
-This project uses an **MTProto client** (`Pyrogram`), connecting as a regular Telegram user account. You do not need admin access in the source channels; any public channel can be monitored.
+## راهکار ما
+این پروژه با استفاده از کلاینت **MTProto** (مانند یک اکانت کاربری واقعی) کار می‌کنه. نیازی نیست ادمین کانال‌های مبدا باشید؛ کافیه کانال عمومی باشه. 
 
-How the pipeline works:
-1. Observes configured source channels in real time.
-2. Normalizes Persian/Arabic text and matches incoming messages against your target keywords.
-3. If a post matches, it is sent to an LLM endpoint (OpenAI / DeepSeek / OpenRouter) to be rewritten, summarized, and tagged.
-4. If the LLM API is unreachable or no key is configured, a rule-based fallback cleaner strips competitor usernames/urls and appends your channel signature.
-5. Sends a preview card to your Telegram account with interactive inline buttons:
-   - `[✅ Publish to Channel]`
-   - `[❌ Reject Draft]`
-   - `[🔄 Regenerate with AI]`
+روال کار برنامه به این صورته:
+1. کانال‌هایی که بهش معرفی کردید رو به‌صورت زنده رصد می‌کنه.
+2. پست‌های جدید رو با لیست کلیدواژه‌های شما تطبیق می‌ده (با پشتیبانی از حروف فارسی/عربی و نیم‌فاصله).
+3. اگر پستی مرتبط بود، متن اون رو به مدل زبانی (OpenAI / DeepSeek) می‌فرسته تا بازنویسی و خلاصه بشه و هشتگ مناسب بخوره.
+4. اگر کلید هوش مصنوعی ست نشده باشه یا اینترنت سرور AI قطع بشه، برنامه متوقف نمی‌شه؛ با یک اسکریپت داخلی (Rule-Based) لینک‌ها و آیدی‌های رقیب رو پاک می‌کنه و امضای کانال شما رو اضافه می‌کنه.
+5. در نهایت، پیش‌نویس مطلب رو همراه با سه دکمهٔ شیشه‌ای برای شما می‌فرسته:
+   - `[✅ انتشار در کانال]`
+   - `[❌ رد کردن]`
+   - `[🔄 بازنویسی مجدد]`
 
 ---
 
-## Architecture
+## معماری سیستم
 
 ```
 [Public Source Channels] --(New Post)--> [Pyrogram MTProto Client]
@@ -50,15 +50,15 @@ How the pipeline works:
 
 ---
 
-## Setup & Installation
+## نصب و راه‌اندازی
 
-### 1. Requirements
-- Python 3.12+ (or Docker)
-- Telegram API credentials (`API_ID` and `API_HASH`) from [my.telegram.org](https://my.telegram.org/apps)
-- A Telegram account to authenticate the client
+### ۱. پیش‌نیازها
+- پایتون 3.12 یا بالاتر (یا Docker)
+- مشخصات API تلگرام (`API_ID` و `API_HASH`) از سایت [my.telegram.org](https://my.telegram.org/apps)
+- یک اکانت تلگرام برای اتصال برنامه
 
-### 2. Configuration
-Clone the repository and copy the example environment file:
+### ۲. تنظیمات اولیه
+پروژه رو دانلود کنید و فایل تنظیمات رو بسازید:
 
 ```bash
 git clone https://github.com/mamadiezad/telegram-channel-curator.git
@@ -66,7 +66,7 @@ cd telegram-channel-curator
 cp .env.example .env
 ```
 
-Edit `.env` and set your preferences:
+فایل `.env` رو باز کنید و متغیرها رو تنظیم کنید:
 ```ini
 TELEGRAM_API_ID=12345678
 TELEGRAM_API_HASH=your_telegram_api_hash
@@ -78,47 +78,43 @@ LLM_MODEL_NAME=gpt-4o-mini
 CHANNEL_SIGNATURE=@MyTechNewsChannel
 ```
 
-### 3. Local Execution
+### ۳. اجرا روی سیستم (بدون داکر)
 ```bash
-# Install dependencies
+# نصب وابستگی‌ها
 make install
 
-# Run automated tests
-make test
-
-# Start the bot
+# اجرای برنامه
 make run
 ```
-*On first start, Pyrogram will prompt you for the verification code sent to your Telegram account to generate the `.session` file.*
+*در بار اول اجرا، تلگرام یک کد تایید براتون می‌فرسته. کد رو در ترمینال وارد کنید تا نشست (`.session`) ساخته بشه.*
 
-### 4. Running with Docker Compose
+### ۴. اجرا با داکر (Docker Compose)
 ```bash
 docker-compose up -d --build
 ```
 
 ---
 
-## Interactive Admin Commands
+## دستورات ربات
 
-Send these commands from your authenticated admin account in any chat with the bot:
+تمام این دستورات رو می‌تونید از اکانت خودتون داخل چت با ربات یا Saved Messages ارسال کنید:
 
-| Command | Description | Example |
+| دستور | توضیح | مثال |
 | :--- | :--- | :--- |
-| `/add_source <@username>` | Monitor a new source channel | `/add_source @TechNewsFA` |
-| `/remove_source <@username>` | Stop monitoring a channel | `/remove_source @TechNewsFA` |
-| `/list_sources` | List all monitored source channels | `/list_sources` |
-| `/add_keyword <word>` | Add a required keyword rule | `/add_keyword python` |
-| `/remove_keyword <word>` | Remove a keyword rule | `/remove_keyword python` |
-| `/list_keywords` | List active keywords (empty list accepts all posts) | `/list_keywords` |
-| `/mode <auto/review>` | Switch between instant posting and inline review | `/mode review` |
-| `/set_prompt <text>` | Customize the LLM rewriting instruction | `/set_prompt Rewrite casually in Persian` |
-| `/stats` | Show curation, publication, and rejection statistics | `/stats` |
+| `/add_source <@username>` | اضافه کردن کانال جدید برای مانیتورینگ | `/add_source @TechNewsFA` |
+| `/remove_source <@username>` | حذف کانال از لیست مانیتورینگ | `/remove_source @TechNewsFA` |
+| `/list_sources` | مشاهده لیست کانال‌های فعال | `/list_sources` |
+| `/add_keyword <word>` | اضافه کردن کلمه کلیدی برای فیلتر | `/add_keyword پایتون` |
+| `/remove_keyword <word>` | حذف کلمه کلیدی | `/remove_keyword پایتون` |
+| `/list_keywords` | لیست کلیدواژه‌ها (اگر خالی باشه همه پست‌ها جمع‌آوری می‌شن) | `/list_keywords` |
+| `/mode <auto/review>` | تغییر حالت بین انتشار مستقیم و تایید با دکمه شیشه‌ای | `/mode review` |
+| `/set_prompt <text>` | تغییر دستورالعمل بازنویسی هوش مصنوعی | `/set_prompt متن رو خودمانی بنویس` |
+| `/stats` | مشاهده آمار پست‌های بررسی‌شده، منتشرشده و ردشده | `/stats` |
 
 ---
 
-## Testing
-
-Run the automated test suite covering Persian normalization, keyword matching, and rule-based fallback cleaning:
+## تست‌ها
+برای اجرای تست‌های خودکار برنامه (کدنویسی، یکسان‌سازی حروف فارسی، پارسر و ماژول بازنویسی):
 
 ```bash
 pytest -v
@@ -126,9 +122,8 @@ pytest -v
 
 ---
 
-## License & Support
-
-This project is open-source and free to use for personal or commercial automation.
+## ارتباط با ما
+این پروژه آزاد و متن‌باز است و برای استفاده در پروژه‌های شخصی یا تجاری محدودیتی ندارد.
 
 - **Made ❤️ by [Mohammad](https://t.me/llllxyz)**
 - **Telegram:** `@llllxyz`

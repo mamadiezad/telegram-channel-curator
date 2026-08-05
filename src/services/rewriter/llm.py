@@ -1,10 +1,3 @@
-"""
-LLM AI Rewriter Service
-=======================
-Integrates with OpenAI-compatible API endpoints (OpenAI, DeepSeek, OpenRouter, Ollama)
-using `openai.AsyncOpenAI` to paraphrase, summarize, and format Telegram posts.
-"""
-
 from typing import Optional
 from openai import AsyncOpenAI, OpenAIError
 from config import config
@@ -12,9 +5,6 @@ from src.utils.logger import logger
 
 
 class LLMRewriter:
-    """
-    Asynchronous AI rewriter client.
-    """
     def __init__(self):
         self.client: Optional[AsyncOpenAI] = None
         if config.is_llm_configured():
@@ -28,10 +18,6 @@ class LLMRewriter:
                 logger.error("Failed to initialize LLM client: %s", exc)
 
     async def rewrite(self, text: str, custom_prompt: Optional[str] = None) -> Optional[str]:
-        """
-        Send the raw Telegram post to the LLM for paraphrasing and cleaning.
-        Returns None if API is unavailable or fails.
-        """
         if not self.client or not text:
             return None
 
@@ -56,7 +42,6 @@ class LLMRewriter:
             )
             rewritten_content = response.choices[0].message.content
             if rewritten_content:
-                # Append channel signature if not already present
                 signature = config.channel_signature
                 if signature and signature not in rewritten_content:
                     rewritten_content = f"{rewritten_content.strip()}\n\n{signature}"

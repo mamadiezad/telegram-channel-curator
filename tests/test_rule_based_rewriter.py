@@ -1,7 +1,3 @@
-"""
-Unit tests for the Rule-Based Rewriter and Template Cleaner.
-"""
-
 import sys
 from pathlib import Path
 

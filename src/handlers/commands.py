@@ -1,17 +1,9 @@
-"""
-Admin Command Handlers
-======================
-Interactive Telegram command interface for managing monitored source channels,
-keyword filters, AI prompt instructions, publishing modes, and quick draft approval.
-"""
-
 from pyrogram import Client, filters, types
 from config import config
 from src.db.database import curator_db
 from src.services.rewriter.manager import rewrite_manager
 from src.utils.logger import logger
 
-# Active publishing mode in memory (defaults to config.publishing_mode)
 ACTIVE_PUBLISHING_MODE: str = config.publishing_mode.lower()
 ACTIVE_LLM_PROMPT: str = config.default_llm_prompt
 
@@ -22,7 +14,6 @@ FOOTER_ATTRIBUTION = (
 
 
 def register_commands(app: Client) -> None:
-    """Register all admin management command handlers."""
 
     @app.on_message(filters.me & filters.command(["start", "help", "curator_help"], prefixes=["/", ".", "!"]))
     async def handle_help_command(client: Client, message: types.Message):
@@ -51,9 +42,6 @@ def register_commands(app: Client) -> None:
         )
         await message.edit_text(help_text, disable_web_page_preview=True)
 
-    # -------------------------------------------------------------------------
-    # Quick Draft Actions (/pub, /rej, /regen)
-    # -------------------------------------------------------------------------
     @app.on_message(filters.me & filters.command(["pub", "publish"], prefixes=["/", ".", "!"]))
     async def handle_publish_draft(client: Client, message: types.Message):
         if len(message.command) < 2:
@@ -131,7 +119,7 @@ def register_commands(app: Client) -> None:
                 "──────────────────────────────\n"
                 f"📡 **کانال منبع:** `{draft['source_channel']}`\n"
                 "──────────────────────────────\n\n"
-                f"{new_rewritten}\n\n"
+                f"{new_rewritten[:3000]}\n\n"
                 "──────────────────────────────\n"
                 "💡 **دستورات سریع مدیریت این پیش‌نویس:**\n"
                 f"• انتشار در کانال ➔ `/pub {draft_id}`\n"
@@ -143,9 +131,6 @@ def register_commands(app: Client) -> None:
         else:
             await message.edit_text("❌ خطا در بازنویسی مجدد.")
 
-    # -------------------------------------------------------------------------
-    # Source Channels Management
-    # -------------------------------------------------------------------------
     @app.on_message(filters.me & filters.command(["add_source"], prefixes=["/", ".", "!"]))
     async def handle_add_source(client: Client, message: types.Message):
         if len(message.command) < 2:
@@ -184,9 +169,6 @@ def register_commands(app: Client) -> None:
         text += f"{FOOTER_ATTRIBUTION}"
         await message.edit_text(text, disable_web_page_preview=True)
 
-    # -------------------------------------------------------------------------
-    # Keyword Filters Management
-    # -------------------------------------------------------------------------
     @app.on_message(filters.me & filters.command(["add_keyword"], prefixes=["/", ".", "!"]))
     async def handle_add_keyword(client: Client, message: types.Message):
         if len(message.command) < 2:
@@ -223,9 +205,6 @@ def register_commands(app: Client) -> None:
         text += f"{FOOTER_ATTRIBUTION}"
         await message.edit_text(text, disable_web_page_preview=True)
 
-    # -------------------------------------------------------------------------
-    # Mode & Prompt Configuration
-    # -------------------------------------------------------------------------
     @app.on_message(filters.me & filters.command(["mode", "set_mode"], prefixes=["/", ".", "!"]))
     async def handle_set_mode(client: Client, message: types.Message):
         global ACTIVE_PUBLISHING_MODE
@@ -255,9 +234,6 @@ def register_commands(app: Client) -> None:
             f"🧠 **دستورالعمل بازنویسی هوش مصنوعی به‌روزرسانی شد:**\n\n`{new_prompt}`\n{FOOTER_ATTRIBUTION}"
         )
 
-    # -------------------------------------------------------------------------
-    # Statistics
-    # -------------------------------------------------------------------------
     @app.on_message(filters.me & filters.command(["stats", "curator_stats"], prefixes=["/", ".", "!"]))
     async def handle_stats(client: Client, message: types.Message):
         stats = await curator_db.get_summary_stats()
